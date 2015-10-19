@@ -1,3 +1,80 @@
+0.12.8
+  specifying a hwnd_to_track now ignores any start_x or start_y value set [always 0] ping me if this is not desired.
+  specifying hwnd_to_track still captures "without decoration" for the window specified. 
+  Added new setting "hwnd_to_track_with_window_decoration"
+
+0.12.7
+  unicode changes
+
+0.12.6
+  update README [no code changes] to remove possibly dangerous ffmpeg command line example
+
+0.12.5
+  fix a few broken scripts, one corner case
+  
+0.12.4
+  fix build [oops]
+
+0.12.3
+  slightly update the "config poorly, display a messagebox"
+
+0.12.2
+  if config poorly, display a messagebox
+  UI more preferences for screen capturer
+
+0.12.1
+  now setup to stream to udp style hosts
+  fix checkboxes to work now
+  
+0.12.0
+  now supports multiple audio simultaneous inputs woot
+  first release that officially combines it with virtual audio capturer
+
+0.11.1
+  new parameter capture_foreground_window_if_1 (captures the HWND of GetForeGroundWindow at startup time)
+  some minro merging with audio
+  
+0.11.0
+  some ui friendlinesses
+  possibly an async fix for this and/or the audio portion
+
+0.10.2
+  hopefully fix start bug introduced in 0.10.1 
+  
+0.10.1
+  fix UI to make options actually selectable
+
+0.10.0
+  add option to not display mouse (capture_mouse_default_1)
+  breaking change:
+  rename the bitblt setting
+    from capture_transparent_windows_with_mouse_blink_only_non_aero_if_1 to 
+    capture_transparent_windows_including_mouse_in_non_aero_if_1_causes_annoying_mouse_flicker
+
+
+0.9.{7,8}
+  include a patched mplayer to make p2p streaming drop less [phew!]
+  GUI cleanups for p2p streaming
+  disable wav for now (buggy)
+
+0.9.6
+  more p2p streaming available options
+  default to 32-bit instead of 24-bit, in case it is more compatible (though barely slower) with some systems [vlc, too]
+
+0.9.5
+  minor ui improvements
+
+0.9.4
+  add broadcast streaming from your desktop option.
+  bump virtual audio version to 0.4.1 [possibly more win8 friendly]
+  
+0.9.3
+  hopefully work with VLC when the width*bit depth doesn't add up to an even multiple of 4.
+  Haven't determined yet if this is VLC's bug or not, but it was causing it to come in like a diagonal blurred image...
+
+0.9.2
+  hopefully a working release of 0.9.1
+
 0.9.1
 
   bump virtual audio version, to default to 16 bit, which is more compatible with FMLE

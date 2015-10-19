@@ -29,7 +29,7 @@ void logToFile(char *log_this) {
 // my very own debug output method...
 void LocalOutput(const char *str, ...)
 {
-#ifdef _DEBUG  // avoid in release mode...
+#ifdef _DEBUG  // avoid all in release mode...
   char buf[2048];
   va_list ptr;
   va_start(ptr, str);
@@ -38,6 +38,7 @@ void LocalOutput(const char *str, ...)
   OutputDebugStringA("\n");
   //logToFile(buf); 
   //logToFile("\n");
+  //printf("%s\n", buf);
   va_end(ptr);
 #endif
 }
@@ -66,7 +67,7 @@ void WarmupCounter()
 {
     LARGE_INTEGER li;
 	BOOL ret = QueryPerformanceFrequency(&li);
-	assert(ret != 0); // only gets run in debug mode LODO
+	ASSERT_RAISE(ret != 0); // only gets run in debug mode LODO
     PCFreqMillis = (long double(li.QuadPart))/1000.0;
 }
 
@@ -81,7 +82,7 @@ long double GetCounterSinceStartMillis(__int64 sinceThisTime) // see above for s
 {
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
-	assert(PCFreqMillis != 0.0); // make sure it's been initialized...
+	ASSERT_RAISE(PCFreqMillis != 0.0); // make sure it's been initialized...this never happens
     return long double(li.QuadPart-sinceThisTime)/PCFreqMillis; //division kind of forces us to return a double of some sort...
 } // LODO do I really need long double here? no really.
 
@@ -104,11 +105,10 @@ void AddMouse(HDC hMemDC, LPRECT lpRect, HDC hScrDC, HWND hwnd) {
 	::GetCursorInfo(&globalCursor);
 	HCURSOR hcur = globalCursor.hCursor;
 
+    GetCursorPos(&p);
 	if(hwnd)
 	  ScreenToClient(hwnd, &p); // 0.010ms
-	else
-	  GetCursorPos(&p);
-
+	
 	ICONINFO iconinfo;
 	BOOL ret = ::GetIconInfo(hcur, &iconinfo); // 0.09ms
 
@@ -157,11 +157,11 @@ HRESULT RegGetDWord(HKEY hKey, LPCTSTR szValueName, DWORD * lpdwResult) {
 
 
 boolean is_config_set_to_1(LPCTSTR szValueName) {
-  return read_config_setting(szValueName, 0) == 1;
+  return read_config_setting(szValueName, 0, true) == 1;
 }
 
 // returns default if nothing is in the registry
- int read_config_setting(LPCTSTR szValueName, int default) {
+ int read_config_setting(LPCTSTR szValueName, int default, boolean zeroAllowed) {
   HKEY hKey;
   LONG i;
   i = RegOpenKeyEx(HKEY_CURRENT_USER,
@@ -176,16 +176,24 @@ boolean is_config_set_to_1(LPCTSTR szValueName) {
 	HRESULT hr = RegGetDWord(hKey, szValueName, &dwVal); // works from flash player, standalone...
 	RegCloseKey(hKey); // done with that
 	if (FAILED(hr)) {
+      // key doesn't exist in the reg at all...
 	  return default;
 	} else {
-		if(dwVal == NOT_SET_IN_REGISTRY) {
-			return default;
-		} else {
-	      return dwVal;
-		}
+	  if (!zeroAllowed && dwVal == 0) {
+            const size_t len = 1256;
+            wchar_t buffer[len] = {};
+	        _snwprintf_s(buffer, len - 1, L"read a zero value from registry, please delete this particular value, instead of setting it to zero: %s", szValueName);
+            writeMessageBox(buffer);
+		    ASSERT_RAISE(false); // non awesome duplication here...
+	  }
+      return dwVal;
 	}
   }
  
+}
+
+void writeMessageBox(LPCWSTR lpText) {
+	 MessageBox(NULL, lpText, L"Error", MB_OK);
 }
 
 HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis ) {
@@ -248,20 +256,22 @@ HRESULT turnAeroOn(boolean on) {
   return aResult;
 }
 
+HMODULE dwmapiDllHandle = LoadLibrary(L"dwmapi.dll");  // make this global so not have to reload it every time...
+
+
 // calculates rectangle of the hwnd
 // *might* no longer be necessary but...but...hmm...
-void GetRectOfWindowIncludingAero(HWND ofThis, RECT *toHere) 
+void GetWindowRectIncludingAero(HWND ofThis, RECT *toHere) 
 {
   HRESULT aResult = S_OK;
 
   ::GetWindowRect(ofThis, toHere); // default to old way of getting the window rectandle
-
+ 
   // Load the dll and keep the handle to it
   // must load dynamicaly because this dll exists only in vista -- not in xp.
   // if this is running on XP then use old way.
   
-  HMODULE dwmapiDllHandle = LoadLibrary(L"dwmapi.dll");  
-  
+
   if (NULL != dwmapiDllHandle ) // not on Vista/Windows7 so no aero so no need to account for aero.
   {
    BOOL isEnabled;
@@ -286,7 +296,7 @@ void GetRectOfWindowIncludingAero(HWND ofThis, RECT *toHere)
       }
     }
    }
-   FreeLibrary(dwmapiDllHandle);
+   //FreeLibrary(dwmapiDllHandle); // we're cacheing this now...
   }
 
 }

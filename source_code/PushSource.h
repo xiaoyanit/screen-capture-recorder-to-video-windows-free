@@ -99,6 +99,7 @@ protected:
 	bool m_bFormatAlreadySet;
 	bool m_bConvertToI420;
 	bool m_bUseCaptureBlt;
+	bool m_bCaptureMouse;
 	//int m_iScreenBitDepth;
 
 	float GetFps();
@@ -107,7 +108,8 @@ protected:
 	boolean m_bDeDupe;
 	int m_millisToSleepBeforePollForChanges;
 	HWND m_iHwndToTrack;
-    void CopyScreenToDataBlock(HDC hScrDc, BYTE *pData, BITMAPINFO *pHeader, IMediaSample *pSample);
+	boolean m_bHwndTrackDecoration;
+	void CopyScreenToDataBlock(HDC hScrDc, BYTE *pData, BITMAPINFO *pHeader, IMediaSample *pSample);
 	void doJustBitBltOrScaling(HDC hMemDC, int nWidth, int nHeight,int nDestWidth,int nDestHeight, HDC hScrDC, int nX, int nY);
 	void doDIBits(HDC hScrDC, HBITMAP hRawBitmap, int nHeightScanLines, BYTE *pData, BITMAPINFO *pHeader);
 
@@ -173,6 +175,6 @@ public:
     HRESULT STDMETHODCALLTYPE QuerySupported(REFGUID guidPropSet, DWORD dwPropID, DWORD *pTypeSupport);
 
 private:
-	void reReadCurrentPosition(int isReRead);
+	void reReadCurrentStartXY(int isReRead);
 
 };

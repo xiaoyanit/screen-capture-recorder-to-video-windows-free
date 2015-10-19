@@ -1,27 +1,29 @@
 require 'setup_screen_tracker_params.rb'
 require 'add_vendored_gems_to_load_path.rb' # for swinghelpers' sane
 
-# no delete functionality in this one...
-def do_command_line
+def do_setup_via_numbers
   setter = SetupScreenTrackerParams.new
   for type in SetupScreenTrackerParams::Settings
-    p type
     previous_setting = setter.read_single_setting type
     if ARGV.index('--just-display-current-settings') || ARGV.index('--just')
       puts "#{type}=#{previous_setting}"
       next
     else
-      p "previously had been set to \/", previous_setting
+      p "previously had been set to [#{previous_setting}]"
     end
-    received = given_from_command_line = ARGV.shift
+    received = ARGV.shift # if they want the CLI version :)
     unless received
       require 'java' # jruby only for getting user input...
       require 'jruby-swing-helpers/lib/simple_gui_creator'
       previous_setting ||= ''
-      received = SimpleGuiCreator.get_user_input('enter desired ' + type + ' (blank resets it to the default [full screen, 30 fps, primary monitor]', previous_setting, true)
-      raise 'cancelled...remaining settings have not been changed, but previous ones to this one were...' unless received # it should at least be the empty string...
+      received = SimpleGuiCreator.get_user_input('enter desired value for:' + type + ' (leave blank to reset to defaults)', previous_setting, true)
     end
-    if received == '' # allow "empty" input to mean "reset this"
+	p "got #{received}"
+	if !received
+	  p "skipping"
+	  next
+	end
+    if received == "" # allow "empty" input to mean "reset this"
       setter.delete_single_setting type
       p 'deleted ' + type.to_s
       next
@@ -58,7 +60,7 @@ if $0 == __FILE__
     puts "syntax: [--just-display-current-settings] or #{SetupScreenTrackerParams::Settings.join(' ')} or nothing to be prompted for the various settings/values"
     exit 0
   end
-  do_command_line
+  do_setup_via_numbers
   if ARGV.index('--just-display-current-settings')
     p 'hit enter to continue' # pause :P
     STDIN.getc

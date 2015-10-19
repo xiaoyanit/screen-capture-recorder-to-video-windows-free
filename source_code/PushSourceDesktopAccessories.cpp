@@ -115,9 +115,14 @@ HRESULT CPushPinDesktop::SetMediaType(const CMediaType *pMediaType)
         switch(pvi->bmiHeader.biBitCount)
         {
 		    case 12:     // i420
-			    m_bConvertToI420 = true;
-				ASSERT(!m_bDeDupe); // not compatible with this yet
+				if(m_bDeDupe) {
+				     //ASSERT_RAISE(!m_bDeDupe); // not compatible with this yet // can't assert here or skype tries this, and, if m_bDeDupe is on, it raises, and kills skype :(
+					//return E_INVALIDARG;
+					m_bDeDupe = false; // just do this working around for now <sigh> so that skype will still work instead of silently fail while others work...
+					LocalOutput("warning: ignoring m_bDeDupe since it doesn't work with i420 type input, which was requested..."); 
+				}
                 hr = S_OK;
+			    m_bConvertToI420 = true;
 			    break;
             case 8:     // 8-bit palettized
             case 16:    // RGB565, RGB555
@@ -130,7 +135,6 @@ HRESULT CPushPinDesktop::SetMediaType(const CMediaType *pMediaType)
 
             default:
                 // We should never agree any other media types
-                ASSERT(FALSE);
                 hr = E_INVALIDARG;
                 break;
         }
@@ -438,10 +442,12 @@ HRESULT CPushPinDesktop::GetMediaType(int iPosition, CMediaType *pmt) // AM_MEDI
 
 	if(iPosition == 0) {
 		// pass it our "preferred" which is 24 bits, since 16 is "poor quality" (really, it is), and I...think/guess that 24 is faster overall.
-		iPosition = 2;
+		 // iPosition = 2; // 24 bit
+		// actually, just use 32 since it's more compatible, for now...too much fear...
+		iPosition = 1; // 32 bit   I once saw a freaky line in skype, too, so until I investigate, err on the side of compatibility...plus what about vlc with like 135 input?
 			// 32 -> 24 (2): getdibits took 2.251ms
 			// 32 -> 32 (1): getdibits took 2.916ms
-			// except those particular numbers might be misleading in terms of total speed...hmm...
+			// except those particular numbers might be misleading in terms of total speed...hmm...though if FFmpeg can use assembly to convert it, it might be a real speedup
 	}
     switch(iPosition)
     {
